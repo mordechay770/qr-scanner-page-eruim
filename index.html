@@ -21,14 +21,21 @@
     const msg = document.getElementById("msg");
     const video = document.getElementById("video");
 
-    // בדיקת תמיכה
+    // נאסוף את הפרמטרים של העמוד עצמו
+    const currentParams = window.location.search; 
+
+    // בדיקת תאימות
     if (!("BarcodeDetector" in window)) {
-        msg.textContent = "הדפדפן לא תומך בזיהוי QR. זה קורה לפעמים במכשירי iPhone או דפדפנים מוגבלים.";
+        msg.textContent = "הדפדפן לא תומך בזיהוי QR.";
         return;
     }
 
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+        // הפעלת מצלמה
+        const stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: "environment" }
+        });
+
         video.srcObject = stream;
         msg.textContent = "כוון את המצלמה לקוד QR";
 
@@ -37,23 +44,32 @@
 
         setInterval(async () => {
             if (scanned) return;
+
             const codes = await detector.detect(video);
 
             if (codes.length > 0) {
-                const url = codes[0].rawValue;
                 scanned = true;
+
+                let url = codes[0].rawValue;
                 msg.textContent = "נמצא קוד: " + url;
 
-                // פותח את הלינק עם שרשור פרמטרים
-                window.location.href = url + "?src=qr";
+                // ממזג את פרמטרי ה־QR עם הפרמטרים של הדף
+                let finalUrl;
+                if (url.includes("?")) {
+                    finalUrl = url + "&" + currentParams.substring(1);
+                } else {
+                    finalUrl = url + currentParams;
+                }
+
+                msg.textContent = "פותח קישור...";
+                window.location.href = finalUrl;
             }
         }, 300);
-    }
-    catch (err) {
-        msg.textContent = "אין גישה למצלמה: " + err;
+
+    } catch (err) {
+        msg.textContent = "שגיאה בגישה למצלמה: " + err;
     }
 })();
 </script>
 
-</body>
-</html>
+</bo

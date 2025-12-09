@@ -3,72 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>סריקת QR</title>
+    <title>QR Scanner</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            direction: rtl;
-            padding: 20px;
-        }
-        video {
-            width: 100%;
-            max-width: 400px;
-            margin-top: 20px;
-            border: 2px solid #333;
-            border-radius: 10px;
-        }
-        #result {
-            margin-top: 20px;
-            font-size: 18px;
-            font-weight: bold;
-        }
+        body { font-family: Arial; text-align: center; direction: rtl; }
+        video { width: 100%; max-width: 400px; margin-top: 20px; border: 2px solid #000; }
+        #msg { margin-top: 20px; font-size: 18px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<h1>סריקת QR</h1>
-
+<h2>סריקת QR</h2>
 <video id="video" autoplay></video>
-
-<div id="result">ממתין לסריקה...</div>
+<div id="msg">מאתחל מצלמה...</div>
 
 <script>
-    const video = document.getElementById('video');
-    const result = document.getElementById('result');
+(async () => {
+    const msg = document.getElementById("msg");
+    const video = document.getElementById("video");
 
-    async function startScanner() {
-        try {
-            // הפעלת מצלמה
-            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-            video.srcObject = stream;
-
-            // בדיקה אם הדפדפן תומך
-            if (!("BarcodeDetector" in window)) {
-                result.textContent = "הדפדפן לא תומך בסריקת QR מובנית.";
-                return;
-            }
-
-            const detector = new BarcodeDetector({ formats: ["qr_code"] });
-
-            // לולאה לסריקה רציפה
-            setInterval(async () => {
-                try {
-                    const barcodes = await detector.detect(video);
-                    if (barcodes.length > 0) {
-                        result.textContent = "נמצא קוד: " + barcodes[0].rawValue;
-                    }
-                } catch (err) {
-                    console.log("שגיאה בסריקה:", err);
-                }
-            }, 300);
-
-        } catch (err) {
-            result.textContent = "אין גישה למצלמה: " + err;
-        }
+    // בדיקת תמיכה
+    if (!("BarcodeDetector" in window)) {
+        msg.textContent = "הדפדפן לא תומך בזיהוי QR. זה קורה לפעמים במכשירי iPhone או דפדפנים מוגבלים.";
+        return;
     }
 
-    startScanner();
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+        video.srcObject = stream;
+        msg.textContent = "כוון את המצלמה לקוד QR";
+
+        const detector = new BarcodeDetector({ formats: ["qr_code"] });
+        let scanned = false;
+
+        setInterval(async () => {
+            if (scanned) return;
+            const codes = await detector.detect(video);
+
+            if (codes.length > 0) {
+                const url = codes[0].rawValue;
+                scanned = true;
+                msg.textContent = "נמצא קוד: " + url;
+
+                // פותח את הלינק עם שרשור פרמטרים
+                window.location.href = url + "?src=qr";
+            }
+        }, 300);
+    }
+    catch (err) {
+        msg.textContent = "אין גישה למצלמה: " + err;
+    }
+})();
 </script>
 
 </body>

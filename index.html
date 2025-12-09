@@ -3,76 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>סורק QR פשוט</title>
+    <title>סריקת QR</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             text-align: center;
-            padding-top: 50px;
+            direction: rtl;
+            padding: 20px;
         }
-        #video-container {
-            width: 300px; /* ניתן לשנות גודל לפי הצורך */
-            height: 300px;
-            margin: 0 auto;
-            border: 1px solid #ccc;
-        }
-        #video {
+        video {
             width: 100%;
-            height: 100%;
+            max-width: 400px;
+            margin-top: 20px;
+            border: 2px solid #333;
+            border-radius: 10px;
+        }
+        #result {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
-    <h1>סורק QR</h1>
-    <p>לחץ על 'התחל סריקה' כדי לפתוח את המצלמה.</p>
-    
-    <div id="video-container">
-        <video id="video" autoplay playsinline></video>
-    </div>
 
-    <button id="startButton">התחל סריקה</button>
-    <p id="result">תוצאה: מחכה לסריקה...</p>
+<h1>סריקת QR</h1>
 
-    <script>
-        // קוד JS לסריקה, קבלת קישור, שרשור פרמטרים ופתיחה ימוקם כאן.
-        // דוגמה (יש להשלים את הלוגיקה המלאה):
-        const video = document.getElementById('video');
-        const startButton = document.getElementById('startButton');
-        const resultElement = document.getElementById('result');
+<video id="video" autoplay></video>
 
-        startButton.addEventListener('click', () => {
-            // זה הקוד המפעיל את המצלמה, כפוף לאישור המשתמש בדפדפן
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-                .then(stream => {
-                    video.srcObject = stream;
-                    video.play();
-                    resultElement.textContent = "תוצאה: המצלמה פועלת. ממתין לסריקה...";
-                    // הוסף כאן את הלוגיקה של ספריית סורק ה-QR (למשל, jsQR)
-                })
-                .catch(err => {
-                    resultElement.textContent = `שגיאה בגישה למצלמה: ${err.name}`;
-                    console.error("שגיאה בגישה למצלמה: ", err);
-                });
-        });
-        
-        // פונקציית דמה לטיפול בקישור שנסרק
-        function handleScannedLink(scannedUrl) {
-            // נניח שנסרק הקישור "https://example.com/base"
-            const baseUrl = scannedUrl;
-            const parameter = "myCustomParam=value"; // הפרמטר שאתה רוצה לשרשר
-            
-            // יצירת הקישור המלא
-            const finalUrl = `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}${parameter}`;
-            
-            resultElement.textContent = `קישור סרוק ומעובד: ${finalUrl}`;
+<div id="result">ממתין לסריקה...</div>
 
-            // *** פתיחה אוטומטית של קישור יכולה להיחסם על ידי הדפדפן (Popup Blocker) ***
-            // window.location.href = finalUrl;
-            // console.log("מנסה לפתוח את: " + finalUrl);
+<script>
+    const video = document.getElementById('video');
+    const result = document.getElementById('result');
+
+    async function startScanner() {
+        try {
+            // הפעלת מצלמה
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+            video.srcObject = stream;
+
+            // בדיקה אם הדפדפן תומך
+            if (!("BarcodeDetector" in window)) {
+                result.textContent = "הדפדפן לא תומך בסריקת QR מובנית.";
+                return;
+            }
+
+            const detector = new BarcodeDetector({ formats: ["qr_code"] });
+
+            // לולאה לסריקה רציפה
+            setInterval(async () => {
+                try {
+                    const barcodes = await detector.detect(video);
+                    if (barcodes.length > 0) {
+                        result.textContent = "נמצא קוד: " + barcodes[0].rawValue;
+                    }
+                } catch (err) {
+                    console.log("שגיאה בסריקה:", err);
+                }
+            }, 300);
+
+        } catch (err) {
+            result.textContent = "אין גישה למצלמה: " + err;
         }
+    }
 
-        // דוגמה לקריאה לפונקציית הטיפול (כאשר סריקה מצליחה):
-        // handleScannedLink("https://example.com/some/path");
-    </script>
+    startScanner();
+</script>
+
 </body>
 </html>

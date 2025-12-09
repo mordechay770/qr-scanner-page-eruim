@@ -3,30 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QR Scanner</title>
+    <title>סריקת QR / Сканирование QR</title>
     <style>
-        body { font-family: Arial; text-align: center; direction: rtl; }
-        video { width: 100%; max-width: 400px; margin-top: 20px; border: 2px solid #000; }
+        body { font-family: Arial; text-align: center; direction: rtl; padding: 20px; }
+        video { width: 100%; max-width: 400px; margin-top: 20px; border: 2px solid #000; border-radius: 10px; }
         #msg { margin-top: 20px; font-size: 18px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<h2>סריקת QR</h2>
+<h2>סריקת QR / Сканирование QR</h2>
 <video id="video" autoplay></video>
-<div id="msg">מאתחל מצלמה...</div>
+<div id="msg">ממתין לסריקה... / Ожидание сканирования...</div>
 
 <script>
 (async () => {
     const msg = document.getElementById("msg");
     const video = document.getElementById("video");
 
-    // נאסוף את הפרמטרים של העמוד עצמו
+    // פרמטרים של הדף עצמו
     const currentParams = window.location.search; 
 
-    // בדיקת תאימות
+    // בדיקת תמיכה בדפדפן
     if (!("BarcodeDetector" in window)) {
-        msg.textContent = "הדפדפן לא תומך בזיהוי QR.";
+        msg.textContent = "הדפדפן לא תומך בזיהוי QR. / Браузер не поддерживает сканирование QR.";
         return;
     }
 
@@ -37,7 +37,7 @@
         });
 
         video.srcObject = stream;
-        msg.textContent = "כוון את המצלמה לקוד QR";
+        msg.textContent = "כוון את המצלמה לקוד QR / Наведите камеру на QR";
 
         const detector = new BarcodeDetector({ formats: ["qr_code"] });
         let scanned = false;
@@ -51,9 +51,9 @@
                 scanned = true;
 
                 let url = codes[0].rawValue;
-                msg.textContent = "נמצא קוד: " + url;
+                msg.textContent = "נמצא קוד: " + url + " / Найден код: " + url;
 
-                // ממזג את פרמטרי ה־QR עם הפרמטרים של הדף
+                // מיזוג פרמטרי QR עם פרמטרי הדף
                 let finalUrl;
                 if (url.includes("?")) {
                     finalUrl = url + "&" + currentParams.substring(1);
@@ -61,15 +61,16 @@
                     finalUrl = url + currentParams;
                 }
 
-                msg.textContent = "פותח קישור...";
+                msg.textContent = "פותח קישור... / Открытие ссылки...";
                 window.location.href = finalUrl;
             }
         }, 300);
 
     } catch (err) {
-        msg.textContent = "שגיאה בגישה למצלמה: " + err;
+        msg.textContent = "שגיאה בגישה למצלמה: " + err + " / Ошибка доступа к камере: " + err;
     }
 })();
 </script>
 
-</bo
+</body>
+</html>
